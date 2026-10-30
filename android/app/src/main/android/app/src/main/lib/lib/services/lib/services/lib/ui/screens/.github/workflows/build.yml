@@ -1,0 +1,70 @@
+name: Aether P2P Cloud APK Builder
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-android-apk:
+    name: Build Zero-Knowledge P2P APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Bootstrap Android Gradle Wrapper (Mobile-First CI Support)
+        run: |
+          mkdir -p /tmp/aether_backup
+          cp pubspec.yaml /tmp/aether_backup/
+          cp -r lib /tmp/aether_backup/
+          if [ -f android/app/src/main/AndroidManifest.xml ]; then
+            cp android/app/src/main/AndroidManifest.xml /tmp/aether_backup/
+          fi
+
+          # Генерация недостающих файлов Gradle и нативной обвязки Android
+          flutter create --project-name aether_p2p --org org.aether.p2p --platforms android .
+
+          # Восстановление пользовательских исходников поверх шаблона
+          cp /tmp/aether_backup/pubspec.yaml ./pubspec.yaml
+          rm -rf ./lib && cp -r /tmp/aether_backup/lib ./lib
+          if [ -f /tmp/aether_backup/AndroidManifest.xml ]; then
+            cp /tmp/aether_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+          fi
+
+      - name: Configure Android minSdkVersion 24 for WebRTC & SQLCipher
+        run: |
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' android/app/build.gradle
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle
+          fi
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle.kts
+          fi
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Split-per-ABI Release APKs
+        run: flutter build apk --release --split-per-abi --no-tree-shake-icons
+
+      - name: Upload Compiled APKs to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aether-P2P-Release-APKs
+          path: build/app/outputs/flutter-apk/*.apk
+          retention-days: 30
