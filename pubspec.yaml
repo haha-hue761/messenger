@@ -1,0 +1,33 @@
+name: aether_p2p
+description: Serverless Anonymous Zero-Knowledge P2P Messenger (TG + Discord + WA).
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Криптография: Ed25519, X25519, ChaCha20-Poly1305, Argon2id, HKDF, SHA-256
+  cryptography: ^2.7.0
+  # Генерация мнемонической фразы BIP-39 (12-24 слова)
+  bip39: ^1.0.6
+  # P2P аудио/видео звонки и прямые каналы данных (DataChannels)
+  flutter_webrtc: ^0.11.7
+  # Зашифрованная локальная БД SQLite (SQLCipher AES-256)
+  sqflite_sqlcipher: ^3.1.0+1
+  path: ^1.9.0
+  # Управление состоянием и локальные настройки
+  provider: ^6.1.2
+  shared_preferences: ^2.3.2
+  convert: ^3.1.1
+  collection: ^1.18.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
